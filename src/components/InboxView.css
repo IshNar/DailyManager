@@ -1,0 +1,133 @@
+.inbox-view-container {
+  padding: 60px 80px;
+  flex: 1;
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.inbox-header {
+  width: 100%;
+  max-width: 650px;
+  margin-bottom: 40px;
+}
+
+.inbox-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.inbox-icon {
+  color: var(--accent-color);
+}
+
+.inbox-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #eee;
+  margin: 0;
+}
+
+.inbox-desc {
+  font-size: 1rem;
+  color: #555;
+  margin: 0;
+}
+
+.inbox-input-wrapper {
+  width: 100%;
+  max-width: 650px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 30px;
+  transition: all 0.2s;
+}
+
+.inbox-input-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.plus-icon {
+  color: #444;
+}
+
+.inbox-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 16px 12px;
+  color: #eee;
+  font-size: 1rem;
+  outline: none;
+}
+
+.inbox-list {
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border-radius: 8px;
+  transition: all 0.2s;
+  group: hover;
+}
+
+.inbox-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.note-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: #333;
+}
+
+.note-text {
+  flex: 1;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.inbox-item.completed .note-text {
+  text-decoration: line-through;
+  opacity: 0.3;
+}
+
+.note-delete {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.inbox-item:hover .note-delete {
+  opacity: 1;
+}
+
+.note-delete:hover {
+  color: #ff4d4f;
+}

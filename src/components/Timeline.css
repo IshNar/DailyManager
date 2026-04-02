@@ -1,17 +1,16 @@
 .timeline-container {
     display: flex;
     flex-direction: column;
-    background: #111;
+    background: var(--bg-color);
     overflow: hidden;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
     height: 100%;
 }
 
 /* Daily Summary Bar */
 .daily-summary {
-    padding: 12px 16px;
-    background: rgba(20, 20, 22, 0.95);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px;
+    background: rgba(20, 20, 22, 0.4);
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
@@ -19,86 +18,85 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .summary-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #aaa;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #666;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .summary-count {
     font-size: 0.75rem;
-    color: #666;
+    color: #444;
 }
 
 .summary-bar {
     display: flex;
-    height: 6px;
-    border-radius: 3px;
+    height: 8px;
+    border-radius: 4px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.05);
-    gap: 1px;
-    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    gap: 2px;
+    margin-bottom: 12px;
 }
 
 .summary-segment {
     height: 100%;
-    border-radius: 3px;
-    transition: width 0.3s ease;
-    min-width: 4px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .summary-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.7rem;
-    color: #888;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #777;
 }
 
 .legend-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
-/* Timeline area - labels and grid side by side */
+/* Timeline area */
 .timeline-scroll-area {
     display: flex;
     flex-direction: row;
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    background: var(--bg-color);
 
     &::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
     }
 
     &::-webkit-scrollbar-track {
-        background: #111;
+        background: transparent;
     }
 
     &::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
     }
 }
 
 .timeline-labels {
-    width: 60px;
-    background: #161616;
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    width: 50px;
+    background: var(--bg-color);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -106,25 +104,24 @@
 
 .time-label {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    padding-right: 8px;
     align-items: flex-start;
-    padding-top: 8px;
-    color: #666;
-    font-size: 0.75rem;
-    font-weight: 500;
-    box-sizing: border-box;
+    padding-top: 4px;
+    color: #333;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
 .timeline-content-wrapper {
     flex: 1;
     position: relative;
-    background: #1a1a1a;
+    background: var(--bg-color);
 }
 
 .timeline-grid {
     position: relative;
     width: 100%;
-    /* Ensure it exactly matches its content height to avoid dead zones */
     cursor: crosshair;
     z-index: 5;
 }
@@ -139,63 +136,53 @@
 }
 
 .hour-line {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .half-hour-line {
-    background: rgba(255, 255, 255, 0.03);
-    border-top: 1px dashed rgba(255, 255, 255, 0.05);
+    border-top: 1px dashed rgba(255, 255, 255, 0.015);
 }
 
 .current-time-line {
     position: absolute;
     left: 0;
     right: 0;
-    height: 2px;
-    background: #ff3b30;
-    z-index: 10;
+    height: 1px;
+    background: var(--accent-color);
+    z-index: 20;
     pointer-events: none !important;
 }
 
 .current-time-dot {
     position: absolute;
     left: 0;
-    top: -4px;
-    width: 10px;
-    height: 10px;
-    background: #ff3b30;
+    top: -3px;
+    width: 7px;
+    height: 7px;
+    background: var(--accent-color);
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(255, 59, 48, 0.6);
+    box-shadow: 0 0 10px var(--accent-color);
 }
 
-/* Category Picker Popup */
-.picker-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
-}
-
+/* Category Picker Premium Popup */
 .category-picker {
     position: fixed;
-    z-index: 101;
-    background: #252528;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 200;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    padding: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
     width: 220px;
-    animation: pickerIn 0.15s ease-out;
+    animation: slideUpIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes pickerIn {
+@keyframes slideUpIn {
     from {
         opacity: 0;
-        transform: scale(0.95) translateY(-4px);
+        transform: scale(0.98) translateY(10px);
     }
-
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -203,43 +190,47 @@
 }
 
 .picker-title {
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     color: #eee;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .picker-time {
-    font-size: 0.75rem;
-    color: #888;
+    font-size: 0.7rem;
+    color: #666;
     margin-bottom: 12px;
 }
 
 .picker-grid {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .picker-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 8px 10px;
     border: none;
-    border-left: 3px solid;
-    background: rgba(255, 255, 255, 0.04);
-    color: #ddd;
+    background: transparent;
+    color: #999;
     font-size: 0.85rem;
+    font-weight: 500;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all 0.2s;
+    text-align: left;
 }
 
 .picker-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateX(2px);
 }
 
 .picker-icon {
-    font-size: 1rem;
+    font-size: 1.1rem;
+    width: 20px;
 }

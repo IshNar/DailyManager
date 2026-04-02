@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './TimeBlock.css';
+import { X, GripVertical } from 'lucide-react';
 
 const TOTAL_MINUTES = 24 * 60;
 const SCROLL_H = 60;
@@ -92,7 +93,7 @@ const TimeBlock = ({ block, top, height, isSelected, onSelect, onUpdate, onDelet
     const handleMouseMove = (moveEvent) => {
       const deltaY = moveEvent.clientY - startY;
       let newHeight = initialHeight + deltaY;
-      if (newHeight < 15) newHeight = 15; // Minimum 15 mins block height approx
+      if (newHeight < 15) newHeight = 15; // Minimum block height
 
       const newEndTimeStr = yToTime(top + newHeight);
       onUpdate({ endTime: newEndTimeStr });
@@ -115,26 +116,20 @@ const TimeBlock = ({ block, top, height, isSelected, onSelect, onUpdate, onDelet
       style={{
         top: `${top}px`,
         height: `${height}px`,
-        backgroundColor: block.color || '#2a2a2a',
-        borderLeftColor: block.color ? adjustColor(block.color, 40) : '#0072FF'
       }}
       onClick={(e) => {
         e.stopPropagation();
         if (!isSelected) onSelect();
       }}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        // optionally show right click menu; for now delete on alt+click or right click?
-        // Let's implement delete button instead
-      }}
     >
+      <div className="category-indicator" style={{ backgroundColor: block.color || '#3b82f6' }} />
+      
       <div
         className="block-drag-handle"
         onMouseDown={handleDragStart}
       >
-        <div className="block-time">
-          {block.startTime}
-        </div>
+        <span className="block-time">{block.startTime} — {block.endTime}</span>
+        <GripVertical size={12} opacity={0.3} />
       </div>
 
       <div className="block-content">
@@ -156,23 +151,21 @@ const TimeBlock = ({ block, top, height, isSelected, onSelect, onUpdate, onDelet
               setIsEditingTitle(true);
             }}
           >
-            {block.title || <span className="untitled-text">Untitled</span>}
+            {block.title || <span className="untitled-text">제목 없음</span>}
           </div>
         )}
       </div>
 
-      {isSelected && (
-        <button
-          className="btn-delete-block"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          title="Delete Block"
-        >
-          ×
-        </button>
-      )}
+      <button
+        className="btn-delete-block"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        title="삭제"
+      >
+        <X size={12} />
+      </button>
 
       <div
         className="block-resize-handle"
@@ -181,10 +174,5 @@ const TimeBlock = ({ block, top, height, isSelected, onSelect, onUpdate, onDelet
     </div>
   );
 };
-
-// Quick helper to lighten/darken color for left border
-function adjustColor(color, amount) {
-  return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
-}
 
 export default TimeBlock;

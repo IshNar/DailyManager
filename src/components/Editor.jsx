@@ -3,15 +3,17 @@ import { Rnd } from 'react-rnd';
 import {
     Bold, Italic, Underline, Strikethrough,
     AlignLeft, AlignCenter, AlignRight,
-    List, ListOrdered, Palette, Highlighter
+    List, ListOrdered, Palette, Highlighter,
+    Plus, MoreVertical, Trash2, Calendar
 } from 'lucide-react';
 import './Editor.css';
+import SlashMenu from './SlashMenu';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const RibbonToolbar = () => {
     const applyCommand = (e, cmd, val = null) => {
-        e.preventDefault(); // Keep focus on the editor
+        e.preventDefault(); 
         document.execCommand(cmd, false, val);
     };
 
@@ -55,13 +57,24 @@ const RibbonToolbar = () => {
     );
 };
 
-const RichTextBlock = ({ id, content, onBlur }) => {
+const RichTextBlock = ({ id, content, onBlur, onSlash }) => {
     const el = useRef(null);
     useEffect(() => {
         if (el.current && el.current.innerHTML !== content && document.activeElement !== el.current) {
             el.current.innerHTML = content;
         }
     }, [content]);
+
+    const handleKeyDown = (e) => {
+        if (e.key === '/') {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                onSlash({ x: rect.left, y: rect.bottom + 5 });
+            }
+        }
+    };
 
     return (
         <div
@@ -71,6 +84,7 @@ const RichTextBlock = ({ id, content, onBlur }) => {
             contentEditable
             suppressContentEditableWarning
             onBlur={(e) => onBlur(e.target.innerHTML)}
+            onKeyDown={handleKeyDown}
             dangerouslySetInnerHTML={{ __html: content }}
         />
     );
@@ -79,6 +93,7 @@ const RichTextBlock = ({ id, content, onBlur }) => {
 const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
     const [blocks, setBlocks] = useState([]);
     const [loadedContent, setLoadedContent] = useState('');
+    const [slashMenu, setSlashMenu] = useState(null); // { x, y }
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -105,12 +120,11 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
                 setBlocks(parsed);
                 return;
             }
-        } catch (e) {
-            // Not JSON
-        }
+        } catch (e) { }
+        
         if (content && content.trim()) {
             const htmlContent = content.replace(/\n/g, '<br/>');
-            setBlocks([{ id: generateId(), type: 'text', content: htmlContent, x: 20, y: 20, width: 600, height: 'auto' }]);
+            setBlocks([{ id: generateId(), type: 'text', content: htmlContent, x: 50, y: 50, width: 600, height: 'auto' }]);
         } else {
             setBlocks([]);
         }
@@ -120,7 +134,6 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
         const handler = setTimeout(() => {
             if (selectedBlock) {
                 const jsonContent = JSON.stringify(blocks);
-
                 if (jsonContent === loadedContent) return;
 
                 if (window.electronAPI && dateStr) {
@@ -134,7 +147,6 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
                     };
                     window.electronAPI.saveMarkdown(selectedBlock.id, dateStr, frontmatter, jsonContent);
                     setLoadedContent(jsonContent);
-                    onUpdateBlock(selectedBlock.id, {});
                 } else {
                     setLoadedContent(jsonContent);
                     onUpdateBlock(selectedBlock.id, { markdown: jsonContent });
@@ -145,29 +157,8 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
         return () => clearTimeout(handler);
     }, [blocks, selectedBlock, onUpdateBlock, dateStr, loadedContent]);
 
-    if (!selectedBlock) {
-        return (
-            <div className="editor-empty-state">
-                <div className="empty-content">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    <h2>No Timeblock Selected</h2>
-                    <p>Click on a block in the timeline to view and edit its workspace.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const title = selectedBlock.title || 'Untitled Session';
-
     const handleImageUpload = async (file) => {
         if (!window.electronAPI) return null;
-
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async () => {
@@ -175,16 +166,10 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
                 const ext = file.name ? file.name.split('.').pop() : 'png';
                 try {
                     const result = await window.electronAPI.saveImage(base64Data, ext);
-                    if (result.success) {
-                        resolve(result.url);
-                    } else {
-                        reject(new Error(result.error));
-                    }
-                } catch (e) {
-                    reject(e);
-                }
+                    if (result.success) resolve(result.url);
+                    else reject(new Error(result.error));
+                } catch (e) { reject(e); }
             };
-            reader.onerror = reject;
             reader.readAsDataURL(file);
         });
     };
@@ -195,138 +180,108 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
             if (items[i].type.indexOf('image/') !== -1) {
                 e.preventDefault();
                 const file = items[i].getAsFile();
-                try {
-                    const url = await handleImageUpload(file);
-                    if (url) {
-                        const isEditableActive = document.activeElement && document.activeElement.isContentEditable;
-                        if (isEditableActive) {
-                            const imgHtml = `<img src="${url}" style="max-width: 100%; border-radius: 4px;" />`;
-                            document.execCommand('insertHTML', false, imgHtml);
-                        } else {
-                            setBlocks(prev => [...prev, {
-                                id: generateId(),
-                                type: 'text',
-                                content: `<img src="${url}" style="max-width: 100%; border-radius: 4px;" /><br/>`,
-                                x: 50,
-                                y: 50,
-                                width: 600,
-                                height: 'auto'
-                            }]);
-                        }
+                const url = await handleImageUpload(file);
+                if (url) {
+                    const isEditableActive = document.activeElement && document.activeElement.isContentEditable;
+                    if (isEditableActive) {
+                        document.execCommand('insertHTML', false, `<img src="${url}" style="max-width: 100%; border-radius: 8px; margin: 8px 0;" />`);
+                    } else {
+                        addNewBlock('text', `<img src="${url}" style="max-width: 100%; border-radius: 8px;" />`);
                     }
-                } catch (err) {
-                    console.error("Failed to save pasted image", err);
                 }
                 break;
             }
         }
     };
 
-    const handleDrop = async (e) => {
-        e.preventDefault();
-        const rect = canvasRef.current.getBoundingClientRect();
-        const dropX = Math.max(0, e.clientX - rect.left + canvasRef.current.scrollLeft);
-        const dropY = Math.max(0, e.clientY - rect.top + canvasRef.current.scrollTop);
+    const addNewBlock = (type, content = '', x = 50, y = 100) => {
+        const newId = generateId();
+        setBlocks(prev => [...prev, {
+            id: newId,
+            type: 'text',
+            content,
+            x,
+            y,
+            width: 700,
+            height: 'auto'
+        }]);
+        setTimeout(() => {
+            const el = document.getElementById(`editable-${newId}`);
+            if (el) el.focus();
+        }, 50);
+    };
 
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const file = e.dataTransfer.files[0];
-            if (file.type.indexOf('image/') !== -1) {
-                try {
-                    const url = await handleImageUpload(file);
-                    if (url) {
-                        const target = e.target;
-                        const isEditable = target.classList.contains('canvas-editable') || target.closest('.canvas-editable');
-                        let inserted = false;
-
-                        if (isEditable && document.caretRangeFromPoint) {
-                            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-                            if (range) {
-                                const sel = window.getSelection();
-                                sel.removeAllRanges();
-                                sel.addRange(range);
-
-                                const imgHtml = `<img src="${url}" style="max-width: 100%; border-radius: 4px;" />`;
-                                document.execCommand('insertHTML', false, imgHtml);
-                                inserted = true;
-                            }
-                        }
-
-                        if (!inserted) {
-                            setBlocks(prev => [...prev, {
-                                id: generateId(),
-                                type: 'text',
-                                content: `<img src="${url}" style="max-width: 100%; border-radius: 4px;" /><br/>`,
-                                x: dropX,
-                                y: dropY,
-                                width: 600,
-                                height: 'auto'
-                            }]);
-                        }
-                    }
-                } catch (err) {
-                    console.error("Failed to save dropped image", err);
+    const handleSlashSelect = (cmdId) => {
+        if (cmdId === 'image') {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                if (e.target.files[0]) {
+                    const url = await handleImageUpload(e.target.files[0]);
+                    if (url) document.execCommand('insertHTML', false, `<img src="${url}" style="max-width: 100%; border-radius: 8px;" />`);
                 }
+            };
+            input.click();
+        } else {
+            let html = '';
+            switch(cmdId) {
+                case 'h1': html = '<h1>제목 1</h1>'; break;
+                case 'h2': html = '<h2>제목 2</h2>'; break;
+                case 'bullet': document.execCommand('insertUnorderedList'); break;
+                case 'number': document.execCommand('insertOrderedList'); break;
+                case 'quote': html = '<blockquote>인용구 입력...</blockquote>'; break;
+                case 'code': html = '<pre><code>코드 입력...</code></pre>'; break;
+                case 'todo': html = '<div style="display: flex; align-items: center; gap: 8px;"><input type="checkbox"/><span>할 일</span></div>'; break;
+                default: break;
             }
+            if (html) document.execCommand('insertHTML', false, html);
         }
+        setSlashMenu(null);
     };
 
-    const handleCanvasClick = (e) => {
-        if (e.target.classList.contains('canvas-area') || e.target.classList.contains('editor-body')) {
-            const rect = canvasRef.current.getBoundingClientRect();
-            const x = Math.max(0, e.clientX - rect.left + canvasRef.current.scrollLeft);
-            const y = Math.max(0, e.clientY - rect.top + canvasRef.current.scrollTop);
-
-            const newId = generateId();
-            setBlocks(prev => [...prev, {
-                id: newId,
-                type: 'text',
-                content: '',
-                x,
-                y,
-                width: 600,
-                height: 'auto'
-            }]);
-
-            setTimeout(() => {
-                const newTextarea = document.getElementById(`editable-${newId}`);
-                if (newTextarea) {
-                    newTextarea.focus();
-                }
-            }, 50);
-        }
-    };
-
-    const updateBlock = (id, changes) => {
-        setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...changes } : b));
-    };
-
-    const deleteBlock = (id) => {
-        setBlocks(prev => prev.filter(b => b.id !== id));
-    };
+    if (!selectedBlock) {
+        return (
+            <div className="editor-empty-state">
+                <div className="empty-content">
+                    <Calendar size={64} strokeWidth={1} />
+                    <h2>시간 블록을 선택하세요</h2>
+                    <p>타임라인에서 블록을 클릭하여 세부 내용을 작성하거나,<br/>새로운 블록을 만들어 하루를 계획해보세요.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="editor-container">
+        <div className="editor-container" onPaste={handlePaste}>
             <RibbonToolbar />
 
             <div className="editor-header">
-                <h2 className="editor-title">{title}</h2>
+                <input 
+                    className="editor-title" 
+                    value={selectedBlock.title || ''} 
+                    onChange={(e) => onUpdateBlock(selectedBlock.id, { title: e.target.value })}
+                    placeholder="제목 없는 세션"
+                />
                 <div className="editor-meta">
                     <span className="editor-time">
                         {selectedBlock.startTime} - {selectedBlock.endTime}
                     </span>
-                    <span style={{ color: '#666', fontSize: '0.8rem' }}>
-                        Tip: Click anywhere on the canvas to type. Drop/paste images.
-                    </span>
+                    <span>{selectedBlock.category || '미지정'}</span>
+                    <span style={{ color: '#333' }}>|</span>
+                    <span style={{ opacity: 0.6 }}>슬래시(/) 명령어로 빠른 서식 적용</span>
                 </div>
             </div>
 
             <div
                 className="editor-body canvas-area"
                 ref={canvasRef}
-                onClick={handleCanvasClick}
-                onPaste={handlePaste}
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
+                onClick={(e) => {
+                    if (e.target === canvasRef.current) {
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        addNewBlock('text', '', e.clientX - rect.left, e.clientY - rect.top);
+                    }
+                }}
             >
                 {blocks.map(b => (
                     <Rnd
@@ -334,49 +289,53 @@ const Editor = ({ selectedBlock, onUpdateBlock, dateStr }) => {
                         bounds="parent"
                         position={{ x: b.x, y: b.y }}
                         size={{ width: b.width, height: b.height === 'auto' ? undefined : b.height }}
-                        onDragStop={(e, d) => updateBlock(b.id, { x: d.x, y: d.y })}
+                        onDragStop={(e, d) => setBlocks(prev => prev.map(bl => bl.id === b.id ? { ...bl, x: d.x, y: d.y } : bl))}
                         onResizeStop={(e, dir, ref, delta, pos) => {
-                            updateBlock(b.id, {
+                            setBlocks(prev => prev.map(bl => bl.id === b.id ? {
+                                ...bl,
                                 width: ref.offsetWidth,
                                 height: ref.offsetHeight,
                                 x: pos.x,
                                 y: pos.y
-                            });
+                            } : bl));
                         }}
                         dragHandleClassName="drag-handle"
                         enableResizing={{
-                            top: true, right: true, bottom: true, left: true,
-                            topRight: true, bottomRight: true, bottomLeft: true, topLeft: true
+                            top: false, right: true, bottom: false, left: true,
+                            topRight: false, bottomRight: true, bottomLeft: true, topLeft: false
                         }}
-                        disableDragging={b.type === 'text' && document.activeElement && document.activeElement.id === `editable-${b.id}`}
+                        disableDragging={document.activeElement && document.activeElement.id === `editable-${b.id}`}
                     >
                         <div className={`canvas-block ${b.type}-block`}>
                             <div className="drag-handle">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                    <circle cx="9" cy="5" r="2"></circle>
-                                    <circle cx="9" cy="12" r="2"></circle>
-                                    <circle cx="9" cy="19" r="2"></circle>
-                                    <circle cx="15" cy="5" r="2"></circle>
-                                    <circle cx="15" cy="12" r="2"></circle>
-                                    <circle cx="15" cy="19" r="2"></circle>
-                                </svg>
+                                <MoreVertical size={14} />
                             </div>
 
-                            {b.type === 'text' ? (
-                                <RichTextBlock
-                                    id={b.id}
-                                    content={b.content}
-                                    onBlur={(newContent) => updateBlock(b.id, { content: newContent })}
-                                />
-                            ) : (
-                                <img src={b.content} alt="attachment" className="canvas-image" />
-                            )}
+                            <RichTextBlock
+                                id={b.id}
+                                content={b.content}
+                                onBlur={(newContent) => setBlocks(prev => prev.map(bl => bl.id === b.id ? { ...bl, content: newContent } : bl))}
+                                onSlash={setSlashMenu}
+                            />
 
-                            <button className="del-btn" onClick={() => deleteBlock(b.id)}>×</button>
+                            <button className="del-btn" onClick={() => setBlocks(prev => prev.filter(bl => bl.id !== b.id))}>
+                                <Trash2 size={12} />
+                            </button>
                         </div>
                     </Rnd>
                 ))}
             </div>
+
+            {slashMenu && (
+                <>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setSlashMenu(null)} />
+                    <SlashMenu 
+                        position={slashMenu} 
+                        onSelect={handleSlashSelect} 
+                        onClose={() => setSlashMenu(null)} 
+                    />
+                </>
+            )}
         </div>
     );
 };

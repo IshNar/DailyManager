@@ -10,4 +10,3 @@ document.addEventListener('drop', (e) => e.preventDefault());
 createRoot(document.getElementById('root')).render(
   <App />
 )
-ii

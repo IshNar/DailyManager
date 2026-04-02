@@ -1,0 +1,55 @@
+# DailyManager setup requirements
+#
+# This repository is not a Python application.
+# There are no pip-installable Python dependencies required to run it.
+# This file exists as a setup checklist for the tools and packages needed
+# to install, run, and build the Electron/Vite application.
+#
+# Required tools
+# - Node.js 24.11.1 was confirmed in the current environment.
+#   Node.js 20+ is the practical minimum target for this project.
+# - npm 11.6.2 was confirmed in the current environment.
+# - Git
+# - Windows 10/11 recommended for Electron desktop builds
+#
+# Initial install
+#   npm install
+#
+# Development commands
+#   npm run dev
+#   npm run electron:dev
+#
+# Build commands
+#   npm run build
+#   npm run electron:build
+#
+# Runtime dependencies from package.json
+# @uiw/react-md-editor==4.0.11
+# date-fns==4.1.0
+# lucide-react==0.575.0
+# react==19.2.0
+# react-dom==19.2.0
+# react-rnd==10.5.2
+# uuid==13.0.0
+#
+# Development/build dependencies from package.json
+# @eslint/js==9.39.1
+# @types/react==19.2.7
+# @types/react-dom==19.2.3
+# @vitejs/plugin-react==5.1.1
+# concurrently==9.2.1
+# cross-env==10.1.0
+# electron==40.6.0
+# electron-builder==26.8.1
+# eslint==9.39.1
+# eslint-plugin-react-hooks==7.0.1
+# eslint-plugin-react-refresh==0.4.24
+# globals==16.5.0
+# vite==7.3.1
+# wait-on==9.0.4
+#
+# Notes
+# - The source of truth for JS dependencies is package.json/package-lock.json.
+# - A previous electron-builder attempt hit a Windows symlink extraction issue
+#   in the winCodeSign cache. If packaging fails again, check Developer Mode,
+#   admin permissions, and archive extraction permissions on Windows.
